@@ -617,18 +617,42 @@ funcs.base64.decode = function(data)
     end))
 end
 
+local canLoadstring = false
+pcall(function()
+	canLoadstring = loadstring("return true")()
+end)
+local function newLoadstring(str)
+	if canLoadstring then return loadstring(str) end
+	str = ([[if type(setidentity) == 'function' then setidentity(8) end ]])..str
+	local nLs = require((_G.Internal or getFunc("Internal") or _G.ENV.Internal).loadstring)
+	local oLs = _G.oldLoadstring
+
+	local psuccess, success, result
+
+	_, success, result = pcall(oLs, str, --env
+		genvMeta)
+	if not success then
+		local worked, nsuccess, nresult = pcall(nLs, str, env)
+		if worked then
+			success, result = nsuccess, nresult
+		end
+	end
+
+	return success, result
+end
+
 funcs.loadstring = function(code)
- local s1, val1 = pcall(function()
-  return loadstring('local v1=15;v1+=1;return v1')()
- end)
- local s2, val2 = pcall(function()
-  return loadstring('local v1={"a"};for i, v in v1 do return v end')()
- end)
- if val1 ~= 16 and val2 ~= 'a' then
-  return oldLoader(toluau(code))
- else
-  return oldLoader(code)
- end
+    local s1, val1 = pcall(function()
+        return newLoadstring('local v1=15;v1+=1;return v1')()
+    end)
+    local s2, val2 = pcall(function()
+        return newLoadstring('local v1={"a"};for i, v in v1 do return v end')()
+    end)
+    if val1 ~= 16 and val2 ~= 'a' then
+        return oldLoader(toluau(code))
+    else
+        return oldLoader(code)
+    end
 end
 
 funcs.getgenv = getgenv
