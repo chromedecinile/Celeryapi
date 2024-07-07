@@ -836,7 +836,13 @@ funcs.setreadonly = function(tbl, cond)
  end
 end
 funcs.httpget = function(url)
- return game:HttpGet(url)
+	local res = _G.HttpResults()
+	if res[url] then return res[url] end
+	if _G.HTTPGET then
+		return _G.HTTPGET(url)
+	end
+	warn("Not loaded")
+	--return CEREQUEST("httpGet", url, "_HTTP_GET_REQUEST")
 end
 funcs.httppost = function(url, body, contenttype)
  return game:HttpPostAsync(url, body, contenttype)
